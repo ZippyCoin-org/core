@@ -1,0 +1,416 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zippycoin-validator-1
+  namespace: zippycoin
+  labels:
+    app: zippycoin-validator-1
+    component: blockchain
+    node-type: validator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zippycoin-validator-1
+  template:
+    metadata:
+      labels:
+        app: zippycoin-validator-1
+        component: blockchain
+        node-type: validator
+    spec:
+      containers:
+      - name: zippycoin-validator-1
+        image: zippycoin/blockchain-core:latest
+        ports:
+        - containerPort: 8545
+          name: rpc
+        - containerPort: 30303
+          name: p2p
+        env:
+        - name: NODE_TYPE
+          value: "validator"
+        - name: NODE_ID
+          value: "validator-1"
+        - name: NETWORK_ID
+          valueFrom:
+            configMapKeyRef:
+              name: zippycoin-config
+              key: NETWORK_ID
+        - name: GENESIS_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: zippycoin-config
+              key: GENESIS_FILE
+        - name: RPC_PORT
+          value: "8545"
+        - name: P2P_PORT
+          value: "30303"
+        - name: VALIDATOR_STAKE
+          value: "1000000000000000000000000"
+        - name: TRUST_SCORE
+          value: "100"
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2"
+          limits:
+            memory: "8Gi"
+            cpu: "4"
+        volumeMounts:
+        - name: genesis-config
+          mountPath: /app/genesis.json
+          subPath: genesis.json
+        - name: validator-1-data
+          mountPath: /app/data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8545
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8545
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: genesis-config
+        configMap:
+          name: zippycoin-genesis
+      - name: validator-1-data
+        persistentVolumeClaim:
+          claimName: validator-1-pvc
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zippycoin-validator-1
+  namespace: zippycoin
+  labels:
+    app: zippycoin-validator-1
+spec:
+  selector:
+    app: zippycoin-validator-1
+  ports:
+  - name: rpc
+    port: 8545
+    targetPort: 8545
+  - name: p2p
+    port: 30303
+    targetPort: 30303
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: validator-1-pvc
+  namespace: zippycoin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: fast-ssd
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zippycoin-validator-2
+  namespace: zippycoin
+  labels:
+    app: zippycoin-validator-2
+    component: blockchain
+    node-type: validator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zippycoin-validator-2
+  template:
+    metadata:
+      labels:
+        app: zippycoin-validator-2
+        component: blockchain
+        node-type: validator
+    spec:
+      containers:
+      - name: zippycoin-validator-2
+        image: zippycoin/blockchain-core:latest
+        ports:
+        - containerPort: 8545
+          name: rpc
+        - containerPort: 30303
+          name: p2p
+        env:
+        - name: NODE_TYPE
+          value: "validator"
+        - name: NODE_ID
+          value: "validator-2"
+        - name: NETWORK_ID
+          valueFrom:
+            configMapKeyRef:
+              name: zippycoin-config
+              key: NETWORK_ID
+        - name: GENESIS_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: zippycoin-config
+              key: GENESIS_FILE
+        - name: RPC_PORT
+          value: "8545"
+        - name: P2P_PORT
+          value: "30303"
+        - name: VALIDATOR_STAKE
+          value: "1000000000000000000000000"
+        - name: TRUST_SCORE
+          value: "95"
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2"
+          limits:
+            memory: "8Gi"
+            cpu: "4"
+        volumeMounts:
+        - name: genesis-config
+          mountPath: /app/genesis.json
+          subPath: genesis.json
+        - name: validator-2-data
+          mountPath: /app/data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8545
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8545
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: genesis-config
+        configMap:
+          name: zippycoin-genesis
+      - name: validator-2-data
+        persistentVolumeClaim:
+          claimName: validator-2-pvc
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zippycoin-validator-2
+  namespace: zippycoin
+  labels:
+    app: zippycoin-validator-2
+spec:
+  selector:
+    app: zippycoin-validator-2
+  ports:
+  - name: rpc
+    port: 8545
+    targetPort: 8545
+  - name: p2p
+    port: 30303
+    targetPort: 30303
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: validator-2-pvc
+  namespace: zippycoin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: fast-ssd
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zippycoin-genesis
+  namespace: zippycoin
+data:
+  genesis.json: |
+    {
+      "config": {
+        "chainId": 1337,
+        "homesteadBlock": 0,
+        "eip150Block": 0,
+        "eip155Block": 0,
+        "eip158Block": 0,
+        "byzantiumBlock": 0,
+        "constantinopleBlock": 0,
+        "petersburgBlock": 0,
+        "istanbulBlock": 0,
+        "berlinBlock": 0,
+        "londonBlock": 0,
+        "arrowGlacierBlock": 0,
+        "grayGlacierBlock": 0,
+        "shanghaiTime": 0,
+        "cancunTime": 0,
+        "pragueTime": 0,
+        "viennaTime": 0,
+        "zippycoin": {
+          "networkId": "zippycoin-mainnet",
+          "blockTime": 2,
+          "maxBlockSize": 1048576,
+          "minValidatorStake": "1000000000000000000000",
+          "minValidatorTrustScore": 70,
+          "quantumResistant": true,
+          "environmentalIntegration": true,
+          "pruningEnabled": true,
+          "consensus": {
+            "type": "hybrid_pow_pos",
+            "powDifficulty": "0x4000000000000000000000000000000000000000000000000000000000000000",
+            "posValidatorCount": 50,
+            "posEpochLength": 1000,
+            "posRewardDistribution": {
+              "validators": 0.4,
+              "edgeNodes": 0.25,
+              "stakers": 0.2,
+              "devFund": 0.1,
+              "environmentalFund": 0.05
+            }
+          },
+          "trust": {
+            "foundationAddress": "0x0000000000000000000000000000000000000001",
+            "minTrustScore": 50,
+            "trustDecayRate": 0.01,
+            "trustUpdateInterval": 3600
+          },
+          "environmental": {
+            "enabled": true,
+            "oracleAddress": "0x0000000000000000000000000000000000000002",
+            "carbonOffsetRate": "1000000000000000000",
+            "renewableEnergyBonus": 0.1
+          }
+        }
+      },
+      "nonce": "0x0000000000000042",
+      "timestamp": "0x68b8a8c0",
+      "extraData": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "gasLimit": "0x1c9c380",
+      "difficulty": "0x4000000000000000000000000000000000000000000000000000000000000000",
+      "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "coinbase": "0x0000000000000000000000000000000000000000",
+      "alloc": {
+        "0x0000000000000000000000000000000000000001": {
+          "balance": "1000000000000000000000000000"
+        },
+        "0x0000000000000000000000000000000000000002": {
+          "balance": "100000000000000000000000000"
+        },
+        "0x0000000000000000000000000000000000000003": {
+          "balance": "100000000000000000000000000"
+        },
+        "0x0000000000000000000000000000000000000004": {
+          "balance": "100000000000000000000000000"
+        },
+        "0x0000000000000000000000000000000000000005": {
+          "balance": "100000000000000000000000000"
+        }
+      },
+      "validators": [
+        {
+          "address": "0x0000000000000000000000000000000000000001",
+          "publicKey": "0x04a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+          "stake": "1000000000000000000000000",
+          "trustScore": 100,
+          "isActive": true,
+          "nodeType": "validator"
+        },
+        {
+          "address": "0x0000000000000000000000000000000000000002",
+          "publicKey": "0x04b2c3d4e5f6789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+          "stake": "1000000000000000000000000",
+          "trustScore": 95,
+          "isActive": true,
+          "nodeType": "validator"
+        },
+        {
+          "address": "0x0000000000000000000000000000000000000003",
+          "publicKey": "0x04c3d4e5f6789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+          "stake": "1000000000000000000000000",
+          "trustScore": 90,
+          "isActive": true,
+          "nodeType": "validator"
+        },
+        {
+          "address": "0x0000000000000000000000000000000000000004",
+          "publicKey": "0x04d4e5f6789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+          "stake": "1000000000000000000000000",
+          "trustScore": 85,
+          "isActive": true,
+          "nodeType": "validator"
+        },
+        {
+          "address": "0x0000000000000000000000000000000000000005",
+          "publicKey": "0x04e5f6789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+          "stake": "1000000000000000000000000",
+          "trustScore": 80,
+          "isActive": true,
+          "nodeType": "validator"
+        }
+      ],
+      "originWallets": [
+        {
+          "countryCode": "US",
+          "multisigAddress": "0x0000000000000000000000000000000000000010",
+          "requiredSignatures": 3,
+          "stakeAmount": "10000000000000000000000000",
+          "trustScore": 100
+        },
+        {
+          "countryCode": "EU",
+          "multisigAddress": "0x0000000000000000000000000000000000000011",
+          "requiredSignatures": 3,
+          "stakeAmount": "10000000000000000000000000",
+          "trustScore": 100
+        },
+        {
+          "countryCode": "AS",
+          "multisigAddress": "0x0000000000000000000000000000000000000012",
+          "requiredSignatures": 3,
+          "stakeAmount": "10000000000000000000000000",
+          "trustScore": 100
+        }
+      ],
+      "environmentalData": {
+        "carbonOffset": "1000000000000000000000000",
+        "renewableEnergy": "500000000000000000000000",
+        "environmentalScore": 85,
+        "lastUpdated": 1755066056
+      },
+      "governance": {
+        "quorumThreshold": 0.67,
+        "votingPeriod": 604800,
+        "executionDelay": 86400,
+        "minProposalStake": "10000000000000000000000"
+      }
+    }
+
+
+
+
+
+
+
+
+
+

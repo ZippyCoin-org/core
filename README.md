@@ -20,13 +20,49 @@ cd core
 ./install.sh
 ```
 
-## 🏗️ What Gets Installed
+## 📦 Available Clients & Services
 
-- **Blockchain Core**: Pure DPoS consensus engine
-- **Backend Services**: Trust Engine, API Gateway, Wallet Service
-- **Layer 2 Edge**: Privacy chains and mesh networking
-- **Monitoring Stack**: Prometheus, Grafana, and custom dashboards
-- **Deployment Tools**: Scripts for scaling and management
+### Core Clients (`/clients/`)
+
+| Client | Purpose | Technology | Location |
+|--------|---------|------------|----------|
+| **Backend Services** | API Gateway, Trust Engine, Wallet Service, DeFi, Governance | Node.js/TypeScript | `clients/backend-services/` |
+| **Mobile Wallet** | iOS/Android wallet with biometric auth | React Native | `clients/mobile-wallet/` |
+| **Smart Contracts** | DeFi, Governance, Bridge, NFT contracts | Solidity | `clients/smart-contracts/` |
+| **Blockchain Core** | DPoS consensus engine | Rust | `clients/blockchain-core/` |
+| **Infrastructure** | Docker Compose, K8s, Monitoring | YAML/Docker | `clients/infrastructure/` |
+
+### Service Breakdown
+
+#### Backend Services (`clients/backend-services/`)
+- **Trust Engine**: Privacy scoring and compliance
+- **API Gateway**: GraphQL API with WebSocket subscriptions
+- **Wallet Service**: HD wallets, multisig, quantum-resistant crypto
+- **DeFi Service**: Lending, staking, yield farming
+- **Governance Service**: Proposal voting and delegation
+- **NFT Service**: Credential NFTs and digital assets
+- **Bridge Service**: Cross-chain transfers
+- **Node Service**: Full node with RPC interface
+
+#### Mobile Wallet (`clients/mobile-wallet/`)
+- React Native app for iOS/Android
+- Biometric authentication
+- Quantum-resistant cryptography
+- Trust scoring integration
+- DeFi protocol interactions
+
+#### Smart Contracts (`clients/smart-contracts/`)
+- **TrustEngine.sol**: Privacy scoring contracts
+- **Governance.sol**: Decentralized governance
+- **DeFiProtocol.sol**: Lending and staking
+- **Bridge.sol**: Cross-chain bridges
+- **NFTCredential.sol**: Privacy-preserving NFTs
+
+#### Infrastructure (`clients/infrastructure/`)
+- **docker-compose.yml**: Full stack deployment
+- **k8s/**: Kubernetes manifests for production
+- **prometheus.yml**: Monitoring configuration
+- **nginx.conf**: Load balancer configuration
 
 ## 🖥️ Supported Platforms
 
@@ -115,19 +151,47 @@ npm run setup
 
 ## 🚀 Running ZippyCoin
 
-### Single Node (Development)
+### Quick Start (Docker)
 ```bash
-npm run start:single
+cd clients/infrastructure
+docker-compose up -d
 ```
 
-### Multi-Node Network
+### Individual Services
+
+#### Run a Full Node
 ```bash
-npm run start:network
+cd clients/backend-services
+docker-compose up -d blockchain
 ```
 
-### With Monitoring
+#### Run Backend Services
 ```bash
-npm run start:full
+cd clients/backend-services
+docker-compose up -d trust-engine api-gateway wallet-service
+```
+
+#### Run Mobile Wallet (Development)
+```bash
+cd clients/mobile-wallet
+npm install
+npm start
+# Or for iOS: npm run ios
+# Or for Android: npm run android
+```
+
+#### Deploy Smart Contracts
+```bash
+cd clients/smart-contracts
+npm install
+npx hardhat run scripts/deploy.js --network localhost
+```
+
+#### Run Blockchain Core (Requires Rust)
+```bash
+cd clients/blockchain-core
+cargo build --release
+./target/release/zippycoin-node
 ```
 
 ## 📊 Monitoring & Management

@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zippycoin-config
+  namespace: zippycoin
+data:
+  # Blockchain configuration
+  NETWORK_ID: "zippycoin-mainnet"
+  GENESIS_FILE: "/app/genesis.json"
+  BLOCK_TIME: "2"
+  MAX_BLOCK_SIZE: "1048576"
+  MIN_VALIDATOR_STAKE: "1000000000000000000000"
+  MIN_VALIDATOR_TRUST_SCORE: "70"
+  QUANTUM_RESISTANT: "true"
+  ENVIRONMENTAL_INTEGRATION: "true"
+  PRUNING_ENABLED: "true"
+  
+  # Consensus configuration
+  CONSENSUS_TYPE: "hybrid_pow_pos"
+  POS_VALIDATOR_COUNT: "50"
+  POS_EPOCH_LENGTH: "1000"
+  POS_REWARD_DISTRIBUTION_VALIDATORS: "0.4"
+  POS_REWARD_DISTRIBUTION_EDGE_NODES: "0.25"
+  POS_REWARD_DISTRIBUTION_STAKERS: "0.2"
+  POS_REWARD_DISTRIBUTION_DEV_FUND: "0.1"
+  POS_REWARD_DISTRIBUTION_ENVIRONMENTAL_FUND: "0.05"
+  
+  # Trust configuration
+  FOUNDATION_ADDRESS: "0x0000000000000000000000000000000000000001"
+  MIN_TRUST_SCORE: "50"
+  TRUST_DECAY_RATE: "0.01"
+  TRUST_UPDATE_INTERVAL: "3600"
+  
+  # Environmental configuration
+  ENVIRONMENTAL_ENABLED: "true"
+  ORACLE_ADDRESS: "0x0000000000000000000000000000000000000002"
+  CARBON_OFFSET_RATE: "1000000000000000000"
+  RENEWABLE_ENERGY_BONUS: "0.1"
+  
+  # Governance configuration
+  QUORUM_THRESHOLD: "0.67"
+  VOTING_PERIOD: "604800"
+  EXECUTION_DELAY: "86400"
+  MIN_PROPOSAL_STAKE: "10000000000000000000000"
+  
+  # Service configuration
+  NODE_ENV: "production"
+  PORT: "3000"
+  GRAPHQL_ENDPOINT: "/graphql"
+  WEBSOCKET_ENDPOINT: "/ws"
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "1000"
+  CORS_ORIGIN: "*"
+  
+  # Database configuration
+  DATABASE_URL: "postgresql://postgres:password@postgres:5432/zippycoin"
+  REDIS_URL: "redis://redis:6379"
+  
+  # Monitoring configuration
+  PROMETHEUS_ENDPOINT: "http://prometheus:9090"
+  GRAFANA_ENDPOINT: "http://grafana:3000"
+  KIBANA_ENDPOINT: "http://kibana:5601"
+  
+  # Security configuration
+  JWT_SECRET: "your-jwt-secret-here"
+  ENCRYPTION_KEY: "your-encryption-key-here"
+  HD_WALLET_MNEMONIC: "your-hd-wallet-mnemonic-here"
+
+
+
+
+
+
+
+
+
+

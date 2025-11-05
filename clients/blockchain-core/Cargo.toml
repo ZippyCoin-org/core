@@ -1,0 +1,68 @@
+[package]
+name = "blockchain-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["ZippyCoin Foundation <foundation@zippycoin.io>"]
+description = "ZippyCoin Blockchain Core - Pure DPoS Consensus Engine"
+
+[dependencies]
+# Core dependencies
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+rand = { workspace = true }
+chrono = { workspace = true }
+futures = { workspace = true }
+
+# Cryptography
+dilithium = { workspace = true }
+sha3 = { workspace = true }
+ed25519-dalek = { workspace = true }
+x25519-dalek = { workspace = true }
+aes-gcm = { workspace = true }
+chacha20poly1305 = { workspace = true }
+
+# Database
+sqlx = { workspace = true }
+sled = { workspace = true }
+
+# Network
+quinn = { workspace = true }
+yamux = { workspace = true }
+libp2p = { workspace = true }
+kademlia-dht = { workspace = true }
+
+# Web
+warp = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+hyper = { workspace = true }
+reqwest = { workspace = true }
+
+# Blockchain
+ethereum-types = { workspace = true }
+rlp = { workspace = true }
+
+# Development
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+env_logger = "0.10"
+
+# Additional dependencies for blockchain core
+hex = "0.4"
+async-trait = "0.1"
+num-traits = "0.2"
+num-bigint = "0.4"
+num-integer = "0.1"
+rocksdb = "0.21"
+lz4_flex = "0.11"
+xz2 = "0.1"
+flate2 = "1.0"
+bincode = "1.3"
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+criterion = { workspace = true }
