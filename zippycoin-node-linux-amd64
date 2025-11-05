@@ -1,0 +1,17 @@
+#!/bin/bash
+echo '==============================================='
+echo 'ZippyCoin Node - PLACEHOLDER BINARY'
+echo '==============================================='
+echo ''
+echo 'This is a placeholder file for the actual binary.'
+echo 'The real ZippyCoin node binary will be compiled'
+echo 'after patent applications are filed.'
+echo ''
+echo 'To run the actual node:'
+echo '1. Download from: https://github.com/ZippyCoin-org/core/releases'
+echo '2. Make executable: chmod +x zippycoin-node-linux-amd64'
+echo '3. Run: ./zippycoin-node-linux-amd64 --help'
+echo ''
+echo 'For Docker: docker run -d zippycoin/core:latest'
+echo '==============================================='
+exit 1

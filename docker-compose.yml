@@ -1,0 +1,174 @@
+version: '3.8'
+
+services:
+  # ZippyCoin Full Node (Mock - until Rust binary is ready)
+  zippycoin-node:
+    image: node:18-alpine
+    container_name: zippycoin-node
+    ports:
+      - "8545:8545"    # RPC
+      - "30303:30303"  # P2P
+    environment:
+      - NODE_TYPE=full
+      - NETWORK=testnet
+    volumes:
+      - node-data:/app/data
+    command: >
+      sh -c "
+        apk add --no-cache curl &&
+        echo 'Starting ZippyCoin Full Node...' &&
+        echo 'RPC: http://localhost:8545' &&
+        echo 'P2P: localhost:30303' &&
+        echo 'Status: Running (Demo Mode)' &&
+        tail -f /dev/null
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - zippycoin
+
+  # Trust Engine Service
+  trust-engine:
+    image: node:18-alpine
+    container_name: zippycoin-trust
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./clients/backend-services/trust-engine:/app
+      - trust-data:/app/data
+    working_dir: /app
+    command: >
+      sh -c "
+        apk add --no-cache curl &&
+        if [ -f 'dist/index.js' ]; then
+          npm install &&
+          node dist/index.js
+        else
+          echo 'Trust Engine API Server (Demo Mode)' &&
+          echo 'Starting on port 3000...' &&
+          node -e \"
+            const express = require('express');
+            const app = express();
+            app.use(require('cors')());
+            app.get('/health', (req, res) => res.json({status: 'ok', service: 'trust-engine'}));
+            app.get('/api/v1/trust/score/:address', (req, res) => {
+              res.json({
+                address: req.params.address,
+                score: Math.random() * 100,
+                timestamp: new Date().toISOString()
+              });
+            });
+            app.listen(3000, () => console.log('Trust Engine running on port 3000'));
+          \"
+        fi
+      "
+    depends_on:
+      - zippycoin-node
+    networks:
+      - zippycoin
+
+  # API Gateway
+  api-gateway:
+    image: node:18-alpine
+    container_name: zippycoin-api
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./clients/backend-services/api-gateway:/app
+      - api-data:/app/data
+    working_dir: /app
+    command: >
+      sh -c "
+        apk add --no-cache curl &&
+        if [ -f 'dist/server.js' ]; then
+          npm install &&
+          node dist/server.js
+        else
+          echo 'API Gateway (Demo Mode)' &&
+          echo 'Starting GraphQL API on port 4000...' &&
+          node -e \"
+            const express = require('express');
+            const { graphqlHTTP } = require('express-graphql');
+            const { buildSchema } = require('graphql');
+            const app = express();
+
+            const schema = buildSchema(\`
+              type Query {
+                blockNumber: String
+                network: String
+              }
+            \`);
+
+            const root = {
+              blockNumber: () => '0x' + Math.floor(Math.random() * 1000000).toString(16),
+              network: () => 'testnet'
+            };
+
+            app.use('/graphql', graphqlHTTP({
+              schema: schema,
+              rootValue: root,
+              graphiql: true,
+            }));
+
+            app.get('/health', (req, res) => res.json({status: 'ok', service: 'api-gateway'}));
+
+            app.listen(4000, () => console.log('API Gateway running on port 4000'));
+          \"
+        fi
+      "
+    depends_on:
+      - trust-engine
+    networks:
+      - zippycoin
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: zippycoin-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - zippycoin
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: zippycoin-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=zippycoin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - zippycoin
+
+volumes:
+  node-data:
+  trust-data:
+  api-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  zippycoin:
+    driver: bridge

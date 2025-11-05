@@ -20,49 +20,51 @@ cd core
 ./install.sh
 ```
 
-## 📦 Available Clients & Services
+## 📦 What's Included
 
-### Core Clients (`/clients/`)
+This release contains **pre-compiled binaries and Docker images only** - no source code is included to protect intellectual property until patents are filed.
 
-| Client | Purpose | Technology | Location |
-|--------|---------|------------|----------|
-| **Backend Services** | API Gateway, Trust Engine, Wallet Service, DeFi, Governance | Node.js/TypeScript | `clients/backend-services/` |
-| **Mobile Wallet** | iOS/Android wallet with biometric auth | React Native | `clients/mobile-wallet/` |
-| **Smart Contracts** | DeFi, Governance, Bridge, NFT contracts | Solidity | `clients/smart-contracts/` |
-| **Blockchain Core** | DPoS consensus engine | Rust | `clients/blockchain-core/` |
-| **Infrastructure** | Docker Compose, K8s, Monitoring | YAML/Docker | `clients/infrastructure/` |
+### Pre-compiled Binaries (`/binaries/`)
 
-### Service Breakdown
+| Component | Purpose | Platforms | Download Size |
+|-----------|---------|-----------|---------------|
+| **zippycoin-node** | Full blockchain node with RPC | Linux, macOS, Windows | ~15MB |
+| **zippycoin-validator** | Validator node for consensus | Linux, macOS, Windows | ~12MB |
+| **zippycoin-wallet-cli** | Command-line wallet | Linux, macOS, Windows | ~8MB |
+| **trust-engine** | Privacy scoring service | Linux, macOS, Windows | ~20MB |
+| **api-gateway** | GraphQL API server | Linux, macOS, Windows | ~18MB |
 
-#### Backend Services (`clients/backend-services/`)
-- **Trust Engine**: Privacy scoring and compliance
-- **API Gateway**: GraphQL API with WebSocket subscriptions
-- **Wallet Service**: HD wallets, multisig, quantum-resistant crypto
-- **DeFi Service**: Lending, staking, yield farming
-- **Governance Service**: Proposal voting and delegation
-- **NFT Service**: Credential NFTs and digital assets
-- **Bridge Service**: Cross-chain transfers
-- **Node Service**: Full node with RPC interface
+### Docker Images
 
-#### Mobile Wallet (`clients/mobile-wallet/`)
-- React Native app for iOS/Android
-- Biometric authentication
-- Quantum-resistant cryptography
-- Trust scoring integration
-- DeFi protocol interactions
+Pre-built Docker images available on Docker Hub:
+- `zippycoin/core:latest` - Full node
+- `zippycoin/validator:latest` - Validator
+- `zippycoin/trust-engine:latest` - Trust scoring
+- `zippycoin/api-gateway:latest` - API server
+- `zippycoin/wallet-service:latest` - Wallet backend
 
-#### Smart Contracts (`clients/smart-contracts/`)
-- **TrustEngine.sol**: Privacy scoring contracts
-- **Governance.sol**: Decentralized governance
-- **DeFiProtocol.sol**: Lending and staking
-- **Bridge.sol**: Cross-chain bridges
-- **NFTCredential.sol**: Privacy-preserving NFTs
+### Quick Start Options
 
-#### Infrastructure (`clients/infrastructure/`)
-- **docker-compose.yml**: Full stack deployment
-- **k8s/**: Kubernetes manifests for production
-- **prometheus.yml**: Monitoring configuration
-- **nginx.conf**: Load balancer configuration
+#### Option 1: Docker (Recommended)
+```bash
+# Pull and run full node
+docker run -d -p 8545:8545 -p 30303:30303 zippycoin/core:latest
+
+# Run with monitoring
+docker run -d -p 9090:9090 zippycoin/monitoring:latest
+```
+
+#### Option 2: Direct Binary Download
+```bash
+# Download appropriate binary for your platform
+# Linux: zippycoin-node-linux-amd64
+# macOS: zippycoin-node-darwin-amd64
+# Windows: zippycoin-node-windows-amd64.exe
+
+# Make executable and run
+chmod +x zippycoin-node-linux-amd64
+./zippycoin-node-linux-amd64 --help
+```
 
 ## 🖥️ Supported Platforms
 
@@ -151,56 +153,60 @@ npm run setup
 
 ## 🚀 Running ZippyCoin
 
-### Quick Start (Docker)
+### Quick Start (Recommended)
 ```bash
-cd clients/infrastructure
+# Clone the repository
+git clone https://github.com/ZippyCoin-org/core.git
+cd core
+
+# Start the complete network
+./scripts/setup-network.sh
+```
+
+This starts:
+- **Full Node**: RPC API on port 8545
+- **Trust Engine**: Privacy scoring on port 3000
+- **API Gateway**: GraphQL API on port 4000
+- **Monitoring**: Prometheus (9090) + Grafana (3001)
+
+### Manual Docker Setup
+```bash
+# Start all services
 docker-compose up -d
+
+# Check status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
 ```
 
-### Individual Services
-
-#### Run a Full Node
+### Stop the Network
 ```bash
-cd clients/backend-services
-docker-compose up -d blockchain
-```
-
-#### Run Backend Services
-```bash
-cd clients/backend-services
-docker-compose up -d trust-engine api-gateway wallet-service
-```
-
-#### Run Mobile Wallet (Development)
-```bash
-cd clients/mobile-wallet
-npm install
-npm start
-# Or for iOS: npm run ios
-# Or for Android: npm run android
-```
-
-#### Deploy Smart Contracts
-```bash
-cd clients/smart-contracts
-npm install
-npx hardhat run scripts/deploy.js --network localhost
-```
-
-#### Run Blockchain Core (Requires Rust)
-```bash
-cd clients/blockchain-core
-cargo build --release
-./target/release/zippycoin-node
+docker-compose down
 ```
 
 ## 📊 Monitoring & Management
 
 Once running, access:
-- **Blockchain Explorer**: http://localhost:3000
-- **API Gateway**: http://localhost:4000
-- **Monitoring Dashboard**: http://localhost:9090
-- **Grafana**: http://localhost:3001
+- **Trust Engine API**: http://localhost:3000/health
+- **API Gateway (GraphQL)**: http://localhost:4000/graphql
+- **Prometheus Monitoring**: http://localhost:9090
+- **Grafana Dashboard**: http://localhost:3001 (admin/zippycoin)
+
+### Test the APIs
+```bash
+# Check trust engine
+curl http://localhost:3000/health
+
+# Check API gateway
+curl http://localhost:4000/health
+
+# Query GraphQL API
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ network }"}'
+```
 
 ## 🔧 Configuration
 

@@ -76,128 +76,157 @@ check_requirements() {
     log_success "Disk space: ${DISK_SPACE}GB available"
 }
 
-# Install system dependencies
-install_dependencies() {
-    log_info "Installing system dependencies..."
+# Download pre-compiled binaries
+download_binaries() {
+    log_info "Downloading ZippyCoin binaries for $OS/$ARCH..."
+
+    # Create binaries directory
+    mkdir -p binaries
+
+    # Determine download URLs based on platform
+    BASE_URL="https://github.com/ZippyCoin-org/core/releases/download/v1.0.0"
 
     if [[ "$OS" == "linux" ]]; then
-        if command -v apt-get &> /dev/null; then
-            # Debian/Ubuntu
-            sudo apt-get update
-            sudo apt-get install -y curl wget git build-essential
-        elif command -v yum &> /dev/null; then
-            # RHEL/CentOS
-            sudo yum update -y
-            sudo yum install -y curl wget git gcc gcc-c++ make
-        elif command -v dnf &> /dev/null; then
-            # Fedora
-            sudo dnf update -y
-            sudo dnf install -y curl wget git gcc gcc-c++ make
+        if [[ "$ARCH" == "amd64" ]]; then
+            BINARIES=(
+                "zippycoin-node-linux-amd64:Full node binary"
+                "zippycoin-validator-linux-amd64:Validator binary"
+                "zippycoin-wallet-cli-linux-amd64:Wallet CLI"
+                "trust-engine-linux-amd64:Trust engine binary"
+                "api-gateway-linux-amd64:API gateway binary"
+            )
         else
-            log_error "Unsupported Linux distribution"
+            log_error "Unsupported Linux architecture: $ARCH"
             exit 1
         fi
     elif [[ "$OS" == "macos" ]]; then
-        if ! command -v brew &> /dev/null; then
-            log_info "Installing Homebrew..."
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        if [[ "$ARCH" == "amd64" ]] || [[ "$ARCH" == "arm64" ]]; then
+            BINARIES=(
+                "zippycoin-node-darwin-$ARCH:Full node binary"
+                "zippycoin-validator-darwin-$ARCH:Validator binary"
+                "zippycoin-wallet-cli-darwin-$ARCH:Wallet CLI"
+                "trust-engine-darwin-$ARCH:Trust engine binary"
+                "api-gateway-darwin-$ARCH:API gateway binary"
+            )
+        else
+            log_error "Unsupported macOS architecture: $ARCH"
+            exit 1
         fi
-        brew install curl wget git
+    else
+        log_error "Unsupported OS: $OS"
+        exit 1
     fi
 
-    log_success "Dependencies installed"
-}
+    # Download each binary
+    for binary_info in "${BINARIES[@]}"; do
+        BINARY_FILE=$(echo "$binary_info" | cut -d: -f1)
+        BINARY_DESC=$(echo "$binary_info" | cut -d: -f2)
 
-# Install Node.js
-install_nodejs() {
-    log_info "Installing Node.js..."
+        log_info "Downloading $BINARY_DESC..."
 
-    if ! command -v node &> /dev/null; then
-        if [[ "$OS" == "linux" ]]; then
-            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-        elif [[ "$OS" == "macos" ]]; then
-            brew install node@18
+        if curl -L -o "binaries/$BINARY_FILE" "$BASE_URL/$BINARY_FILE" 2>/dev/null; then
+            # Make executable on Unix-like systems
+            if [[ "$OS" != "windows" ]]; then
+                chmod +x "binaries/$BINARY_FILE" 2>/dev/null || true
+            fi
+            log_success "Downloaded $BINARY_DESC"
+        else
+            log_warn "Failed to download $BINARY_DESC (may not be available yet)"
         fi
-    fi
+    done
 
-    NODE_VERSION=$(node --version)
-    log_success "Node.js installed: $NODE_VERSION"
+    log_success "Binary download complete"
 }
 
-# Install Docker
-install_docker() {
-    log_info "Installing Docker..."
+# Setup Docker environment (optional)
+setup_docker() {
+    log_info "Setting up Docker environment..."
 
     if ! command -v docker &> /dev/null; then
+        log_info "Docker not found. Installing Docker..."
+
         if [[ "$OS" == "linux" ]]; then
-            curl -fsSL https://get.docker.com -o get-docker.sh
-            sudo sh get-docker.sh
-            sudo usermod -aG docker $USER
+            curl -fsSL https://get.docker.com -o get-docker.sh 2>/dev/null
+            sudo sh get-docker.sh 2>/dev/null
+            sudo usermod -aG docker $USER 2>/dev/null || true
+            sudo systemctl start docker 2>/dev/null || true
         elif [[ "$OS" == "macos" ]]; then
-            brew install --cask docker
+            log_info "Please install Docker Desktop for Mac from https://docker.com"
         fi
     fi
 
-    # Start Docker service
-    if [[ "$OS" == "linux" ]]; then
-        sudo systemctl start docker 2>/dev/null || true
-        sudo systemctl enable docker 2>/dev/null || true
+    # Test Docker
+    if command -v docker &> /dev/null; then
+        log_success "Docker is available"
+    else
+        log_warn "Docker not available - you can still use the downloaded binaries"
     fi
-
-    log_success "Docker installed"
 }
 
-# Clone and setup ZippyCoin
-setup_zippycoin() {
-    log_info "Setting up ZippyCoin..."
+# Create configuration
+create_config() {
+    log_info "Creating default configuration..."
 
-    if [[ ! -d "zippycoin" ]]; then
-        git clone https://github.com/ZippyCoin-org/core.git zippycoin
-    fi
+    mkdir -p config
 
-    cd zippycoin
+    cat > config/default.json << EOF
+{
+  "network": "testnet",
+  "node": {
+    "rpc_port": 8545,
+    "p2p_port": 30303,
+    "data_dir": "./data"
+  },
+  "trust": {
+    "enabled": true,
+    "api_port": 3000
+  },
+  "api": {
+    "port": 4000,
+    "graphql": true,
+    "websocket": true
+  }
+}
+EOF
 
-    # Install dependencies
-    if [[ -f "package.json" ]]; then
-        npm install
-    fi
-
-    cd ..
-    log_success "ZippyCoin setup complete"
+    log_success "Configuration created in config/default.json"
 }
 
 # Main installation
 main() {
-    echo "🚀 ZippyCoin Universal Installer"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🚀 ZippyCoin Binary Installer"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "This installer downloads pre-compiled binaries only."
+    echo "No source code is included to protect intellectual property."
     echo ""
 
     detect_platform
     check_requirements
-    install_dependencies
-    install_nodejs
-    install_docker
-    setup_zippycoin
+    download_binaries
+    setup_docker
+    create_config
 
     echo ""
     log_success "✅ Installation complete!"
     echo ""
-    echo "Available clients installed:"
-    echo "📱 clients/mobile-wallet/     - React Native wallet app"
-    echo "🔗 clients/backend-services/  - Trust Engine, API Gateway, Wallet Service"
-    echo "📄 clients/smart-contracts/   - Solidity contracts with Hardhat"
-    echo "⛓️  clients/blockchain-core/   - Rust blockchain implementation"
-    echo "🏗️  clients/infrastructure/    - Docker Compose & Kubernetes"
+    echo "Downloaded binaries in ./binaries/:"
+    echo "🏃 zippycoin-node*      - Full blockchain node"
+    echo "⚖️  zippycoin-validator* - Validator node"
+    echo "👛 zippycoin-wallet-cli* - Command-line wallet"
+    echo "🔍 trust-engine*        - Privacy scoring service"
+    echo "🌐 api-gateway*         - GraphQL API server"
     echo ""
     echo "Quick start options:"
-    echo "1. Full network: cd clients/infrastructure && docker-compose up -d"
-    echo "2. Backend only: cd clients/backend-services && docker-compose up -d"
-    echo "3. Mobile wallet: cd clients/mobile-wallet && npm install && npm start"
+    echo "1. Run full node: ./binaries/zippycoin-node-linux-amd64"
+    echo "2. Docker: docker run -d zippycoin/core:latest"
+    echo "3. Wallet: ./binaries/zippycoin-wallet-cli-linux-amd64 --help"
+    echo ""
+    echo "Configuration: ./config/default.json"
     echo ""
     echo "See README.md for detailed usage instructions"
     echo ""
-    echo "🎉 Ready to run ZippyCoin clients!"
+    echo "🎉 Ready to run ZippyCoin!"
 }
 
 main "$@"

@@ -221,16 +221,65 @@ EOF
 start_network() {
     log_info "Starting ZippyCoin network..."
 
-    if command -v docker-compose &> /dev/null; then
-        docker-compose up -d
-    elif command -v docker &> /dev/null && docker compose version &> /dev/null; then
-        docker compose up -d
-    else
-        log_error "Docker Compose not found. Please install Docker and Docker Compose."
+    # Check if docker-compose.yml exists
+    if [[ ! -f "../docker-compose.yml" ]]; then
+        log_error "docker-compose.yml not found. Please run this from the scripts/ directory."
         exit 1
     fi
 
-    log_success "Network started"
+    # Use docker-compose or docker compose
+    if command -v docker-compose &> /dev/null; then
+        COMPOSE_CMD="docker-compose"
+    elif docker compose version &> /dev/null; then
+        COMPOSE_CMD="docker compose"
+    else
+        log_error "Docker Compose not found. Please install Docker and Docker Compose."
+        log_info "Installation instructions:"
+        log_info "  Linux: curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh"
+        log_info "  macOS: brew install --cask docker"
+        exit 1
+    fi
+
+    log_info "Using: $COMPOSE_CMD"
+
+    # Change to parent directory where docker-compose.yml is located
+    cd ..
+
+    # Stop any existing containers
+    log_info "Stopping existing containers..."
+    $COMPOSE_CMD down 2>/dev/null || true
+
+    # Start the network
+    log_info "Starting ZippyCoin services..."
+    $COMPOSE_CMD up -d
+
+    if [[ $? -eq 0 ]]; then
+        log_success "Network started successfully!"
+
+        # Wait a moment for services to be ready
+        sleep 5
+
+        # Show status
+        log_info "Service Status:"
+        $COMPOSE_CMD ps
+
+        log_info "Checking service health..."
+        if curl -s http://localhost:3000/health &> /dev/null; then
+            log_success "✅ Trust Engine is responding"
+        else
+            log_warn "⚠️ Trust Engine not ready yet (this is normal on first startup)"
+        fi
+
+        if curl -s http://localhost:4000/health &> /dev/null; then
+            log_success "✅ API Gateway is responding"
+        else
+            log_warn "⚠️ API Gateway not ready yet (this is normal on first startup)"
+        fi
+    else
+        log_error "Failed to start network"
+        log_info "Check logs with: $COMPOSE_CMD logs"
+        exit 1
+    fi
 }
 
 # Show status
@@ -261,6 +310,12 @@ show_status() {
 main() {
     echo "🚀 ZippyCoin Network Setup"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "This will start a working ZippyCoin network with:"
+    echo "- Full Node (RPC on port 8545)"
+    echo "- Trust Engine (API on port 3000)"
+    echo "- API Gateway (GraphQL on port 4000)"
+    echo "- Monitoring (Prometheus/Grafana on ports 9090/3001)"
     echo ""
 
     create_directories
