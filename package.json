@@ -1,0 +1,52 @@
+{
+  "name": "@zippycoin/core",
+  "version": "1.0.0",
+  "description": "ZippyCoin Universal Blockchain Platform - Deploy anywhere, scale everywhere",
+  "main": "install.sh",
+  "scripts": {
+    "install": "./install.sh",
+    "setup": "./scripts/setup-network.sh",
+    "health": "./scripts/health-check.sh",
+    "update": "./scripts/update.sh",
+    "detect": "./scripts/detect-platform.sh"
+  },
+  "keywords": [
+    "blockchain",
+    "cryptocurrency",
+    "DPoS",
+    "privacy",
+    "decentralized",
+    "zippycoin",
+    "universal",
+    "cross-platform"
+  ],
+  "author": "ZippyCoin Foundation",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZippyCoin-org/core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ZippyCoin-org/core/issues"
+  },
+  "homepage": "https://zippycoin.io",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64",
+    "arm"
+  ],
+  "files": [
+    "install.sh",
+    "README.md",
+    "scripts/",
+    "!scripts/*.log"
+  ]
+}
